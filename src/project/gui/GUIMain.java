@@ -1,11 +1,15 @@
 package project.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+import project.db.DBCommunicator;
 import project.gui.utils.MainSceneSwapper;
 
 import java.util.HashMap;
@@ -16,6 +20,8 @@ public class GUIMain extends Application {
 //    private Map<String,Object> SHARED_VALUES = new HashMap<>();
 
     private MainSceneSwapper mainSceneSwapper;
+
+    private DBCommunicator databaseCommunicator;
 
     public static void guiMain(String[] args) {
         launch(args);
@@ -37,10 +43,21 @@ public class GUIMain extends Application {
         stage.setTitle("TAL Database Manager");
         Scene scene = new Scene(mainRoot, 720, 640);  // width, height
         stage.setScene(scene);
+        // setup the scene swapper
         mainSceneSwapper = new MainSceneSwapper(scene);
         GUIMainController mainCtrlr = ((GUIMainController) mainLoader.getController());
-        mainCtrlr.setMainSceneSwapper(mainSceneSwapper); // give the controller access to the scene swapper
-        stage.show();  // load up the actual window!
+        mainCtrlr.setMainSceneSwapper(mainSceneSwapper); // give the main controller access to the scene swapper
+        // setup the database communicator
+        databaseCommunicator = new DBCommunicator();
+        mainCtrlr.setDatabaseCommunicator(databaseCommunicator);
+        // setup the cleanup actions when the window is closing
+        stage.setOnCloseRequest(windowEvent -> {
+            System.out.println("performing stage's closing actions");
+            this.databaseCommunicator.close();
+            Platform.exit();  // from what I've read, this will close down the program 'the proper way'
+        });
+        // load up the actual window!
+        stage.show();
     }
 
     private boolean promptLogin() {
