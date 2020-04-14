@@ -4,7 +4,7 @@
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="project.gui.utils.DBViewerController">
+<VBox xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="project.gui.utils.dbviewer.DBViewerController">
    <children>
       <ToolBar fx:id="topToolBar" prefHeight="40.0" prefWidth="200.0" />
       <TableView fx:id="tableView" prefHeight="180.0" prefWidth="300.0" VBox.vgrow="ALWAYS" />

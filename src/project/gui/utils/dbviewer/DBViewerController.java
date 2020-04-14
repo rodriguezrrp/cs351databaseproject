@@ -1,4 +1,4 @@
-package project.gui.utils;
+package project.gui.utils.dbviewer;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -15,7 +15,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.util.Callback;
 
-import javax.xml.crypto.Data;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -73,6 +72,7 @@ public class DBViewerController {
     public void fillTable(ResultSet rset) {
         setupTableColumns(rset);
         setTableItems(rset);
+//        tableView.getScene().getRoot().getProperties()
     }
 
     public void setupTableColumns(ResultSet rset) {

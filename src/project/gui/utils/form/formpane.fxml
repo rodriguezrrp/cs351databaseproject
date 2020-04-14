@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <VBox fx:id="vboxFormFields" spacing="8.0">
+          <children>
+              <Label text="Sample Form Header">
+                  <font>
+                      <Font size="18.0" />
+                  </font>
+              </Label>
+              <Separator />
+          </children>
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
+      
+      </VBox>
+      <Region VBox.vgrow="ALWAYS" />
+      <Separator prefWidth="200.0" />
+      <ToolBar prefHeight="40.0" prefWidth="200.0">
+        <items>
+          <Button fx:id="btnCancel" mnemonicParsing="false" onAction="#onActionCancel" text="Cancel" />
+<!--            <Region HBox.hgrow="ALWAYS" />-->
+            <Region fx:id="spacerRegion" />
+            <Button fx:id="btnYes" mnemonicParsing="false" onAction="#onActionYes" text="the yes btn" />
+        </items>
+      </ToolBar>
+   </children>
+</VBox>

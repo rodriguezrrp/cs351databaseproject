@@ -62,6 +62,7 @@ public class GUIMain extends Application {
 
     private boolean promptLogin() {
         // load a login screen which blocks execution until login resolves (ideally successfully)
+
         // cheap shortcut; TODO: make this actually prompt a login!
         return authLogin(null,null);
     }

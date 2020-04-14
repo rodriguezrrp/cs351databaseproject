@@ -1,19 +1,20 @@
-package project.gui.utils;
+package project.gui.utils.dbviewer;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.Pane;
+import project.gui.utils.MainSceneSwapper;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class DBViewerBuilder {
@@ -28,7 +29,8 @@ public class DBViewerBuilder {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                DBViewerBuilder.this.mainSceneSwapper.toMainPane();
+//                DBViewerBuilder.this.mainSceneSwapper.toMainPane();
+                DBViewerBuilder.this.mainSceneSwapper.back();
             }
         };
     };
@@ -81,7 +83,8 @@ public class DBViewerBuilder {
         return this;
     }
 
-    public DBViewerBuilder addExitButton(MainSceneSwapper mainSceneSwapper) {
+    public DBViewerBuilder addExitButton(/*MainSceneSwapper mainSceneSwapper*/) {
+        Objects.requireNonNull(mainSceneSwapper, "parameter mainSceneSwapper must not be null!");
         // put a separator node right before the button, just for looks :)
         this.rightItemsSuppliers.add(() -> new Separator(Orientation.VERTICAL));
         this.addButton("Exit",
