@@ -25,7 +25,7 @@ public class FormPaneController {
     private Function<Map<String, String>, FormClosingAction> useFormDataOnExit;
 
     @FXML
-    private Label header;
+    private Label lblHeader;
     @FXML
     private VBox vboxFormFields;
     @FXML
@@ -35,7 +35,9 @@ public class FormPaneController {
     @FXML
     private Region spacerRegion;
 
-    public FormPaneController(MainSceneSwapper mainSceneSwapper, Function<Map<String, String>, FormClosingAction> useFormDataOnExit) {
+    public FormPaneController(//String formTitle, String formYesBtnText,
+                              MainSceneSwapper mainSceneSwapper,
+                              Function<Map<String, String>, FormClosingAction> useFormDataOnExit) {
         this.mainSceneSwapper = mainSceneSwapper;
         this.useFormDataOnExit = useFormDataOnExit;
     }
@@ -70,6 +72,14 @@ public class FormPaneController {
         mainSceneSwapper.back();
     }
 
+
+    public void setFormHeader(String formHeader) {
+        this.lblHeader.setText(formHeader);
+    }
+
+    public void setYesBtnText(String yesBtnText) {
+        this.btnYes.setText(yesBtnText);
+    }
 
     public void addField(String label, String displayLabel, String defaultVal) {
         // prep the form field

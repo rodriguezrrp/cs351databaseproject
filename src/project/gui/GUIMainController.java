@@ -106,19 +106,19 @@ public class GUIMainController {
         System.out.println("orders");
         this.mainSceneSwapper.toPane(() -> {
             try {
-                return this.repViewerBuilder.create();
+                return this.ordersViewerBuilder.create();
             } catch (IOException e) {
-                System.err.println("customerViewerBuilder was unable to create a pane!");
+                System.err.println("ordersViewerBuilder was unable to create a pane!");
                 e.printStackTrace();
                 return null;
             }
         });
     }
 
-    @FXML
-    private void onActionInv() {
-        System.out.println("inv");
-    }
+//    @FXML
+//    private void onActionInv() {
+//        System.out.println("inv");
+//    }
 
     @FXML
     private void onActionExit() {

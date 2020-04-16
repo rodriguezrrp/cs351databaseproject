@@ -15,7 +15,7 @@ public class FormPaneBuilder {
     private List<String> labels = new ArrayList<>();
     private List<String> displayTexts = new ArrayList<>();
     private List<String> defaults = new ArrayList<>();
-    private String title;
+    private String formHeader;
     private String yesBtnText;
 
     // if exists, executed as the form loads to populate it with data (ex. when preparing to edit)
@@ -23,11 +23,11 @@ public class FormPaneBuilder {
     // executed as the form closes to apply the data to the database (ex. when saving or adding)
     private Function<Map<String, String>, FormPaneController.FormClosingAction> useFormDataOnExit;
 
-    public FormPaneBuilder(MainSceneSwapper mainSceneSwapper, String title, String yesBtnText,
+    public FormPaneBuilder(MainSceneSwapper mainSceneSwapper, String formHeader, String yesBtnText,
                            Function<Map<String, String>, FormPaneController.FormClosingAction> useFormDataOnExit) {
-        this(mainSceneSwapper, title, yesBtnText, null, useFormDataOnExit);
+        this(mainSceneSwapper, formHeader, yesBtnText, null, useFormDataOnExit);
     }
-    public FormPaneBuilder(MainSceneSwapper mainSceneSwapper, String title, String yesBtnText,
+    public FormPaneBuilder(MainSceneSwapper mainSceneSwapper, String formHeader, String yesBtnText,
                            Supplier<Map<String,String>> provideFormDataOnLoad,
                            Function<Map<String, String>, FormPaneController.FormClosingAction> useFormDataOnExit) {
         Objects.requireNonNull(useFormDataOnExit,"useFormDataOnExit must not be null!" +
@@ -35,7 +35,7 @@ public class FormPaneBuilder {
         this.provideFormDataOnLoad = provideFormDataOnLoad;
         this.useFormDataOnExit = useFormDataOnExit;
         this.mainSceneSwapper = mainSceneSwapper;
-        this.title = title;
+        this.formHeader = formHeader;
         this.yesBtnText = yesBtnText;
     }
 
@@ -57,6 +57,9 @@ public class FormPaneBuilder {
         FormPaneController ctrlr = new FormPaneController(mainSceneSwapper, useFormDataOnExit);
         loader.setController(ctrlr);
         Pane formPane = loader.load();
+        // set some extra data that must happen post-load
+        ctrlr.setFormHeader(formHeader);
+        ctrlr.setYesBtnText(yesBtnText);
         // add the forms to the loaded pane via the controller
         Map<String, String> prePopulatingData = null;
         if(provideFormDataOnLoad != null) {

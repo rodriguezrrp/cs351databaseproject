@@ -13,7 +13,7 @@
    <children>
       <VBox fx:id="vboxFormFields" spacing="8.0">
           <children>
-              <Label text="Sample Form Header">
+              <Label fx:id="lblHeader" text="Sample Form Header">
                   <font>
                       <Font size="18.0" />
                   </font>
