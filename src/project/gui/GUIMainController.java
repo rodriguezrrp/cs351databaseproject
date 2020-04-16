@@ -62,9 +62,10 @@ public class GUIMainController {
         }
     };
 
+    private FormPaneBuilder addRepFormBuilder;
+
 
     public GUIMainController() { }
-
 
 
     @FXML
@@ -130,74 +131,74 @@ public class GUIMainController {
     public void setMainSceneSwapper(MainSceneSwapper mainSceneSwapper) {
         // get access to the main scene swapper for this application
         this.mainSceneSwapper = mainSceneSwapper;
-        if(mainSceneSwapper == null) {
-            this.customerViewerBuilder = null;
-            this.repViewerBuilder = null;
-        } else {
-            this.customerViewerBuilder = new DBViewerBuilder(mainSceneSwapper, customerDataSupplier)
-                    .addBackButton()
-                    .addExitButton(/*this.mainSceneSwapper*/);
-            this.repViewerBuilder = new DBViewerBuilder(mainSceneSwapper, repDataSupplier)
-                    .addBackButton()
-                    .addButton("Add Representative",
-                            () -> { return (ActionEvent actionEvent) -> {
-                                // start of event handler lambda
-                                FormPaneBuilder formPaneBuilder = new FormPaneBuilder(
-                                        mainSceneSwapper,
-                                        "Add Representative", "Add",
-                                        (Map<String,String> formDataMap) -> {
-                                            // when the form is closed, add the data into the database
-                                            try {
-                                                boolean success = databaseCommunicator.addRep(formDataMap);
-                                                if(!success) {
-                                                    Alert a = new Alert(Alert.AlertType.ERROR,
-                                                            "Failed to submit the form's data to the database!" +
-                                                                    "\nCheck the program's console output for details",
-                                                            ButtonType.CLOSE);
-                                                }
-                                                return FormPaneController.FormClosingAction.CLOSE_FORM;
-                                            } catch (SQLException e) {
-                                                System.err.println("Failed to add rep!");
-                                                e.printStackTrace();
-                                                // create an alert to let the user know something went wrong.
-                                                Alert a = new Alert(Alert.AlertType.ERROR,
-                                                        "Failed to add rep! Please try again."
-                                                                + "\n" + e.getClass().getCanonicalName()
-                                                                + "\n" + e.getMessage(),
-                                                        ButtonType.CLOSE);
-                                                a.show();
-                                                return FormPaneController.FormClosingAction.CLOSE_FORM;
-                                            }
-                                        })
-                                        .addColumnLabelForField("FirstName","First Name:")
-                                        .addColumnLabelForField("LastName","Last Name:")
-                                        .addColumnLabelForField("Street","Street:")
-                                        .addColumnLabelForField("City","City:")
-                                        .addColumnLabelForField("State","State:")
-                                        .addColumnLabelForField("PostalCode","Postal Code:")
-                                        .addColumnLabelForField("Commission","Commission:")
-                                        .addColumnLabelForField("Rate","Rate:");
-                                mainSceneSwapper.toPane(() -> {
-                                    try {
-                                        return formPaneBuilder.create();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                        return null;
-                                    }
-                                });
-                                // end of event handler lambda
-                            }; },
-                            DBViewerBuilder.ToolbarSide.LEFT
-                    )
-                    .addExitButton(/*this.mainSceneSwapper*/);
-            this.ordersViewerBuilder = new DBViewerBuilder(mainSceneSwapper, ordersDataSupplier)
-                    .addBackButton()
-                    .addExitButton();
-        }
+        initializeBuilders(mainSceneSwapper == null);
     }
     public void setDatabaseCommunicator(DBCommunicator databaseCommunicator) {
         // get access to the database communicator for this application
         this.databaseCommunicator = databaseCommunicator;
+    }
+
+    private void initializeBuilders(boolean justSetAllToNull) {
+        this.addRepFormBuilder = justSetAllToNull ? null : new FormPaneBuilder(
+                mainSceneSwapper,
+                "Add Representative", "Add",
+                // function that consumes form's data:
+                (Map<String,String> formDataMap) -> {
+                    // when the form is closed, add the data into the database
+                    try {
+                        boolean success = databaseCommunicator.addRep(formDataMap);
+                        if(!success) {
+                            Alert a = new Alert(Alert.AlertType.ERROR,
+                                    "Failed to submit the form's data to the database!" +
+                                            "\nCheck the program's console output for details",
+                                    ButtonType.CLOSE);
+                        }
+                        return FormPaneController.FormClosingAction.CLOSE_FORM;
+                    } catch (SQLException e) {
+                        System.err.println("Failed to add rep!");
+                        e.printStackTrace();
+                        // create an alert to let the user know something went wrong.
+                        Alert a = new Alert(Alert.AlertType.ERROR,
+                                "Failed to add rep! Please try again."
+                                        + "\n" + e.getClass().getCanonicalName()
+                                        + "\n" + e.getMessage(),
+                                ButtonType.CLOSE);
+                        a.show();
+                        return FormPaneController.FormClosingAction.CLOSE_FORM;
+                    }
+                })
+                .addColumnLabelForField("FirstName","First Name:")
+                .addColumnLabelForField("LastName","Last Name:")
+                .addColumnLabelForField("Street","Street:")
+                .addColumnLabelForField("City","City:")
+                .addColumnLabelForField("State","State:")
+                .addColumnLabelForField("PostalCode","Postal Code:")
+                .addColumnLabelForField("Commission","Commission:")
+                .addColumnLabelForField("Rate","Rate:");
+        this.customerViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, customerDataSupplier)
+                .addBackButton()
+                .addExitButton(/*this.mainSceneSwapper*/);
+        this.repViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, repDataSupplier)
+                .addBackButton()
+                .addButton("Add Representative",
+                        () -> { return (ActionEvent actionEvent) -> {
+                            /* start of event handler lambda */
+                            this.mainSceneSwapper.toPane(() -> {
+                                try {
+                                    return addRepFormBuilder.create();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    return null;
+                                }
+                            });
+                            /* end of event handler lambda */
+                        }; },
+                        DBViewerBuilder.ToolbarSide.LEFT
+                )
+                .addExitButton(/*this.mainSceneSwapper*/);
+        this.ordersViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, ordersDataSupplier)
+                .addBackButton()
+                .addExitButton();
     }
 
 }
