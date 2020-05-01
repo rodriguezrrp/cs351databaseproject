@@ -14,7 +14,7 @@ public class FormPaneBuilder {
     private MainSceneSwapper mainSceneSwapper;
     private List<String> labels = new ArrayList<>();
     private List<String> displayTexts = new ArrayList<>();
-    private List<String> defaults = new ArrayList<>();
+    private List<Object> values = new ArrayList<>();
     private List<FormFieldTypes> types = new ArrayList<>();
     private String formHeader;
     private String yesBtnText;
@@ -51,12 +51,15 @@ public class FormPaneBuilder {
         types.add(FormFieldTypes.TEXT);
         labels.add(label);
         displayTexts.add(displayText);
-        defaults.add(defaultValue);
+        values.add(defaultValue);
         return this;
     }
 
     public FormPaneBuilder addColumnLabelForDropdown(Supplier<List<String>> dropdownValues, String label, String displayText) {
-
+        types.add(FormFieldTypes.DROPDOWN);
+        labels.add(label);
+        displayTexts.add(displayText);
+        values.add(dropdownValues);
         return this;
     }
 
@@ -76,22 +79,36 @@ public class FormPaneBuilder {
         ctrlr.setAfterExitHandler(afterExitHandler);
         // add the forms to the loaded pane via the controller
         Map<String, String> prePopulatingData = null;
+//        System.out.println("provideFormDataOnLoad = " + provideFormDataOnLoad);
         if(provideFormDataOnLoad != null) {
             prePopulatingData = provideFormDataOnLoad.get();
         }
+//        System.out.println("prePopulatingData = " + prePopulatingData);
+        Iterator<FormFieldTypes> iterTypes = types.iterator();
         Iterator<String> iterLabels = labels.iterator();
         Iterator<String> iterDspTxts = displayTexts.iterator();
-        Iterator<String> iterDefaults = defaults.iterator();
+        Iterator<Object> iterValues = values.iterator();
         while(iterLabels.hasNext()) {
+            FormFieldTypes type = iterTypes.next();
             String label = iterLabels.next();
             String displayText = iterDspTxts.next();
-            String defaultVal = iterDefaults.next();
-            if(prePopulatingData != null) {
-                // if possible, try to get the default value from the prepopulation data instead (using the label as the key);
-                //  if that fails (ex. if no prepopulation data is given), revert back to the builder-specified default value.
-                defaultVal = prePopulatingData.getOrDefault(label, defaultVal);
+            Object value = iterValues.next();
+            if(type.equals(FormFieldTypes.TEXT)) {
+                String defaultValue = (String) value;
+                if (prePopulatingData != null) {
+                    // if possible, try to get the default value from the prepopulation data instead (using the label as the key);
+                    //  if that fails (ex. if no prepopulation data is given), revert back to the builder-specified default value.
+                    defaultValue = prePopulatingData.getOrDefault(label, defaultValue);
+                }
+                ctrlr.addTextField(label, displayText, defaultValue);
+            } else if(type.equals(FormFieldTypes.DROPDOWN)) {
+                // if it's a dropdown, interpret the 'value' as a List<String> supplier (which it should be),
+                //  which should produce the list to use in the dropdown.
+                List<String> dropdownList = ((Supplier<List<String>>) value).get();
+                ctrlr.addDropdown(label, displayText, dropdownList);
+            } else {
+                System.out.println("Ignoring type ");
             }
-            ctrlr.addField(label, displayText, defaultVal);
         }
         // return the prepared form pane
         return formPane;

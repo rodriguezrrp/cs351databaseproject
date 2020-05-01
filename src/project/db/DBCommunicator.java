@@ -67,51 +67,12 @@ public class DBCommunicator implements Closeable {
         PreparedStatement prepStmt = conn.prepareStatement("SELECT CreditLimit FROM customer WHERE CustomerName = ?");
         prepStmt.setString(1, custName);
         ResultSet rset = prepStmt.executeQuery();
+        rset.next();
         return rset.getString("CreditLimit");
     }
 
 
     public boolean addRep(Map<String, String> formDataMap) throws SQLException {
-//        Statement stmt = conn.createStatement();
-//        // TODO: FIXME: Rework this method to use PreparedStatement to avoid SQL injection!
-//        //  This whole method was just a quick and dirty solution!
-//        String[] expectedColumns = {"LastName", "FirstName", "Street", "City", "State", "PostalCode", "Commission", "Rate"};
-//        String[] values = new String[expectedColumns.length];
-//        // "INSERT INTO rep (columnNames...) VALUES (respective values...)"
-//        // setup a string builder (yes, this is VERY BAD PRACTICE; should use PreparedStatement)
-//        StringBuilder sqlBldr = new StringBuilder("INSERT INTO rep (");
-//        boolean errored = false; // used for aborting in case of missing data
-//        // append in all the column names
-//        for (int i = 0; i < expectedColumns.length; i++) {
-//            String columnKey = expectedColumns[i];
-//            if (i != 0) sqlBldr.append(", ");
-//            sqlBldr.append(columnKey);
-//            if(formDataMap.containsKey(columnKey)) {
-//                // store the value that came from the form (via the param formDataMap)
-//                //   so it can be appended into the sql later
-//                values[i] = formDataMap.get(columnKey);
-//            } else {
-//                // print the data missing from the map, for debug reasons
-//                System.err.println("DBCommunicator's addRep needed a value for \""+columnKey+"\" but formDataMap did not contain any!");
-//                errored = true;
-//            }
-//        }
-//        if(errored) return false; // abort the function due to missing required data?
-//        // append in all the corresponding values
-//        sqlBldr.append(") VALUES (");
-//        for (int i = 0; i < values.length; i++) {
-//            String value = values[i];
-//            if(i != 0) sqlBldr.append(", ");
-//            sqlBldr.append(value);
-//        }
-//        sqlBldr.append(");");
-//        // get the sql string
-//        String sql = sqlBldr.toString();
-//        System.out.println("Executing SQL query: \""+sql+"\""); // print the sql for debug reasons
-//        int result = stmt.executeUpdate(sql);
-//        System.out.println("Query result value: " + result);
-
-
 //        boolean prevautocommit = conn.getAutoCommit();
 //        System.out.println("prevautocommit = " + prevautocommit);
 //        conn.setAutoCommit(false);
@@ -148,9 +109,20 @@ public class DBCommunicator implements Closeable {
         System.out.println(" ...done closing database communication stuff!");
     }
 
-    public boolean updateCustCredLim(Map<String, String> formDataMap) throws SQLException {
-        return false;
-        // TODO: FIXME: FIX THIS make it work
+//    public boolean updateCustCredLim(Map<String, String> formDataMap) throws SQLException {
+//        // Make this actually work
+//        System.out.println("DBCommunicator:updateCustCredLim: formDataMap = " + formDataMap);
+//        return false;
+//    }
+    public boolean updateCustCredLim(String custName, String newCredLimValue) throws SQLException {
+        PreparedStatement prepStmt = conn.prepareStatement("UPDATE customer" +
+                " SET CreditLimit = ? WHERE CustomerName = ?");
+        prepStmt.setString(1, newCredLimValue);
+        prepStmt.setString(2, custName);
+        System.out.println("prepStmt.toString() = " + prepStmt.toString());
+        int result = prepStmt.executeUpdate();
+        System.out.println("Query result value: " + result);
+        return true;
     }
 
 }

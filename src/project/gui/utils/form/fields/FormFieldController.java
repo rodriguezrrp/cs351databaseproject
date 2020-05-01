@@ -1,10 +1,10 @@
-package project.gui.utils.form;
+package project.gui.utils.form.fields;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-public class FormFieldController {
+public class FormFieldController implements CtrlrWithFormFieldValue {
 
     @FXML
     private Label lblName;
@@ -25,6 +25,7 @@ public class FormFieldController {
         fieldValue.setText(initialValue);
     }
 
+    @Override
     public String getFieldValue() {
         return fieldValue.getText();
     }

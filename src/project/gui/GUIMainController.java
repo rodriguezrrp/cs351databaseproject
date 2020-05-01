@@ -110,7 +110,7 @@ public class GUIMainController {
 
     @FXML
     private void onActionCust() {
-        System.out.println("cust");
+//        System.out.println("cust");
         this.mainSceneSwapper.toPane(() -> {
             try {
                 return this.customerViewerBuilder.create();
@@ -124,7 +124,7 @@ public class GUIMainController {
 
     @FXML
     private void onActionOrders() {
-        System.out.println("orders");
+//        System.out.println("orders");
         this.mainSceneSwapper.toPane(() -> {
             try {
                 return this.ordersViewerBuilder.create();
@@ -160,6 +160,8 @@ public class GUIMainController {
 
     private void initializeBuilders(boolean justSetAllToNull) {
         this.custCredLimUpdaterFormBuilderGenerator = justSetAllToNull ? null : (String custName, String initCustCredLim) -> {
+//            System.out.println("custName = " + custName);
+//            System.out.println("initCustCredLim = " + initCustCredLim);
             return new FormPaneBuilder(
                     mainSceneSwapper,
                     "Update "+custName+"'s Credit Limit", "Update",
@@ -167,7 +169,7 @@ public class GUIMainController {
                     (Map<String,String> formDataMap) -> {
                         // when the form is closed, update the customer's data in the database
                         try {
-                            boolean success = databaseCommunicator.updateCustCredLim(formDataMap);
+                            boolean success = databaseCommunicator.updateCustCredLim(custName,formDataMap.get("CreditLimit"));
                             if(success) {
                                 return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_SUCCESS;
                             } else {
@@ -175,14 +177,15 @@ public class GUIMainController {
                                         "Failed to submit the form's data to the database!" +
                                                 "\nCheck the program's console output for details",
                                         ButtonType.CLOSE);
+                                a.show();
                                 return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE;
                             }
                         } catch (SQLException e) {
-                            System.err.println("Failed to add rep!");
+                            System.err.println("Failed to update customer cred limit!");
                             e.printStackTrace();
                             // create an alert to let the user know something went wrong.
                             Alert a = new Alert(Alert.AlertType.ERROR,
-                                    "Failed to add rep! Please try again."
+                                    "Failed to update credit limit! Please try again."
                                             + "\n" + e.getClass().getCanonicalName()
                                             + "\n" + e.getMessage(),
                                     ButtonType.CLOSE);
@@ -202,9 +205,24 @@ public class GUIMainController {
                 )
                 .addColumnLabelForDropdown(custNameSelectDataSupplier, "CustomerName", "Customer To Edit:")
                 .afterFormExits((FormPaneController.FormClosingAction closingAction, Map<String,String> formData) -> {
+//                    System.out.println("closingAction = " + closingAction);
+//                    System.out.println("formData = " + formData);
+                    if(formData == null || closingAction.equals(FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE))
+                        return;
+//                    System.out.println("We out here");
                     String name = formData.get("CustomerName");
                     String lim = databaseCommunicator.getCredLimOfCust(name);
-                    this.custCredLimUpdaterFormBuilderGenerator.apply(name, lim).create();
+                    FormPaneBuilder nextFormBldr = this.custCredLimUpdaterFormBuilderGenerator.apply(name, lim);
+//                    this.mainSceneSwapper.back();
+                    this.mainSceneSwapper.toPane(() -> {
+                        try {
+                            return nextFormBldr.create();
+                        } catch (IOException e) {
+                            System.err.println("custCredLimFormBuilder's afterFormExits was unable to create a pane!");
+                            e.printStackTrace();
+                            return null;
+                        }
+                    });
                 });
 
         this.addRepFormBuilder = justSetAllToNull ? null : new FormPaneBuilder(
@@ -222,6 +240,7 @@ public class GUIMainController {
                                     "Failed to submit the form's data to the database!" +
                                             "\nCheck the program's console output for details",
                                     ButtonType.CLOSE);
+                            a.show();
                             return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE;
                         }
                     } catch (SQLException e) {
@@ -246,13 +265,28 @@ public class GUIMainController {
                 .addColumnLabelForField("Commission","Commission:")
                 .addColumnLabelForField("Rate","Rate:")
                 .afterFormExits((formClosingAction, formData) -> {  // TODO remove this chained method and lambda, was just for testing the afterFormExit handler
-                    System.out.println("hello from after form exit!");
+                    System.out.println("test: hello from after form exit!");
                     System.out.println("    formClosingAction = " + formClosingAction);
                     System.out.println("    formData = " + formData);
                 });
 
         this.customerViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, customerDataSupplier)
                 .addBackButton()
+                .addButton("Update Customer Credit Limit",
+                        () -> { return (ActionEvent actionEvent) -> {
+                            /* start of event handler lambda */
+                            this.mainSceneSwapper.toPane(() -> {
+                                try {
+                                    return custCredLimFormBuilder.create();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    return null;
+                                }
+                            });
+                            /* end of event handler lambda */
+                        }; },
+                        DBViewerBuilder.ToolbarSide.LEFT
+                )
                 .addExitButton(/*this.mainSceneSwapper*/);
 
         this.repViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, repDataSupplier)
