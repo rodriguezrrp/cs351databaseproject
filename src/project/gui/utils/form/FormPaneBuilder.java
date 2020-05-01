@@ -15,8 +15,10 @@ public class FormPaneBuilder {
     private List<String> labels = new ArrayList<>();
     private List<String> displayTexts = new ArrayList<>();
     private List<String> defaults = new ArrayList<>();
+    private List<FormFieldTypes> types = new ArrayList<>();
     private String formHeader;
     private String yesBtnText;
+    private FormPaneExitHandler afterExitHandler = null;
 
     // if exists, executed as the form loads to populate it with data (ex. when preparing to edit)
     private Supplier<Map<String,String>> provideFormDataOnLoad;
@@ -46,9 +48,20 @@ public class FormPaneBuilder {
     // TODO: add some way to add a mask to these fields?
     //  So while the user edits the form, they can't enter invalid values?
     public FormPaneBuilder addColumnLabelForField(String label, String displayText, String defaultValue) {
+        types.add(FormFieldTypes.TEXT);
         labels.add(label);
         displayTexts.add(displayText);
         defaults.add(defaultValue);
+        return this;
+    }
+
+    public FormPaneBuilder addColumnLabelForDropdown(Supplier<List<String>> dropdownValues, String label, String displayText) {
+
+        return this;
+    }
+
+    public FormPaneBuilder afterFormExits(FormPaneExitHandler afterExitHandler) {
+        this.afterExitHandler = afterExitHandler;
         return this;
     }
 
@@ -60,6 +73,7 @@ public class FormPaneBuilder {
         // set some extra data that must happen post-load
         ctrlr.setFormHeader(formHeader);
         ctrlr.setYesBtnText(yesBtnText);
+        ctrlr.setAfterExitHandler(afterExitHandler);
         // add the forms to the loaded pane via the controller
         Map<String, String> prePopulatingData = null;
         if(provideFormDataOnLoad != null) {

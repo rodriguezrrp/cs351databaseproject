@@ -18,11 +18,12 @@ import java.util.function.Function;
 
 public class FormPaneController {
 
-    public static enum FormClosingAction { CLOSE_FORM, KEEP_FORM_OPEN }
+    public static enum FormClosingAction { CLOSE_FORM_WITH_SUCCESS, CLOSE_FORM_WITH_FAILURE, KEEP_FORM_OPEN }
 
     private Map<String,FormFieldController> dbLabelControllerMap = new HashMap<>();
     private MainSceneSwapper mainSceneSwapper;
     private Function<Map<String, String>, FormClosingAction> useFormDataOnExit;
+    private FormPaneExitHandler exitHandler = null;
 
     @FXML
     private Label lblHeader;
@@ -61,15 +62,29 @@ public class FormPaneController {
 //        useFormDataOnExit.accept(formData);
         FormClosingAction success = useFormDataOnExit.apply(formData);
         // exit the form (unless requested otherwise)
-        if(success.equals(FormClosingAction.CLOSE_FORM)) {
-            mainSceneSwapper.back();
+        if(!success.equals(FormClosingAction.KEEP_FORM_OPEN)) {
+            exitForm(success, formData);
         }
     }
 
     @FXML
     private void onActionCancel() {
         // exit the form
+        exitForm(FormClosingAction.CLOSE_FORM_WITH_FAILURE, null);
+    }
+
+    private void exitForm(FormClosingAction formClosingAction, Map<String, String> formData) {
+        // do the things that make the form exit
         mainSceneSwapper.back();
+        // call the handler if it is set
+        if(exitHandler != null) {
+            try {
+                exitHandler.afterFormExit(formClosingAction, formData);
+            } catch (Exception e) {
+                System.err.println("Error occurred when executing FormPaneExitHandler.");
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -79,6 +94,10 @@ public class FormPaneController {
 
     public void setYesBtnText(String yesBtnText) {
         this.btnYes.setText(yesBtnText);
+    }
+
+    public void setAfterExitHandler(FormPaneExitHandler exitHandler) {
+        this.exitHandler = exitHandler;
     }
 
     public void addField(String label, String displayLabel, String defaultVal) {

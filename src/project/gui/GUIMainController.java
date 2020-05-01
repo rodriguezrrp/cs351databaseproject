@@ -14,8 +14,10 @@ import project.gui.utils.form.FormPaneController;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class GUIMainController {
@@ -63,6 +65,24 @@ public class GUIMainController {
     };
 
     private FormPaneBuilder addRepFormBuilder;
+
+    // give it the customer's name and credit limit, it provides the builder you need
+    private BiFunction<String, String, FormPaneBuilder> custCredLimUpdaterFormBuilderGenerator;
+    // procures a list of the customer's names out of the database
+    private Supplier<List<String>> custNameSelectDataSupplier = () -> {
+        try {
+            ResultSet res = databaseCommunicator.getListOfCustNames();
+            List<String> nameList = new ArrayList<>();
+            while(res.next()) {
+                nameList.add(res.getString("CustomerName"));
+            }
+            return nameList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    };
+    private FormPaneBuilder custCredLimFormBuilder;
 
 
     public GUIMainController() { }
@@ -139,6 +159,54 @@ public class GUIMainController {
     }
 
     private void initializeBuilders(boolean justSetAllToNull) {
+        this.custCredLimUpdaterFormBuilderGenerator = justSetAllToNull ? null : (String custName, String initCustCredLim) -> {
+            return new FormPaneBuilder(
+                    mainSceneSwapper,
+                    "Update "+custName+"'s Credit Limit", "Update",
+//                    custDataSupplier,
+                    (Map<String,String> formDataMap) -> {
+                        // when the form is closed, update the customer's data in the database
+                        try {
+                            boolean success = databaseCommunicator.updateCustCredLim(formDataMap);
+                            if(success) {
+                                return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_SUCCESS;
+                            } else {
+                                Alert a = new Alert(Alert.AlertType.ERROR,
+                                        "Failed to submit the form's data to the database!" +
+                                                "\nCheck the program's console output for details",
+                                        ButtonType.CLOSE);
+                                return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE;
+                            }
+                        } catch (SQLException e) {
+                            System.err.println("Failed to add rep!");
+                            e.printStackTrace();
+                            // create an alert to let the user know something went wrong.
+                            Alert a = new Alert(Alert.AlertType.ERROR,
+                                    "Failed to add rep! Please try again."
+                                            + "\n" + e.getClass().getCanonicalName()
+                                            + "\n" + e.getMessage(),
+                                    ButtonType.CLOSE);
+                            a.show();
+                            return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE;
+                        }
+                    })
+                    .addColumnLabelForField("CreditLimit","New Credit Limit:", initCustCredLim);
+        };
+
+        // note: when this form exits, it starts up the updater form (see above)
+        this.custCredLimFormBuilder = justSetAllToNull ? null : new FormPaneBuilder(
+                mainSceneSwapper,
+                "Select Customer to Edit", "Select",
+//                custNameSelectDataSupplier,
+                (formData) -> { return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_SUCCESS; }
+                )
+                .addColumnLabelForDropdown(custNameSelectDataSupplier, "CustomerName", "Customer To Edit:")
+                .afterFormExits((FormPaneController.FormClosingAction closingAction, Map<String,String> formData) -> {
+                    String name = formData.get("CustomerName");
+                    String lim = databaseCommunicator.getCredLimOfCust(name);
+                    this.custCredLimUpdaterFormBuilderGenerator.apply(name, lim).create();
+                });
+
         this.addRepFormBuilder = justSetAllToNull ? null : new FormPaneBuilder(
                 mainSceneSwapper,
                 "Add Representative", "Add",
@@ -147,13 +215,15 @@ public class GUIMainController {
                     // when the form is closed, add the data into the database
                     try {
                         boolean success = databaseCommunicator.addRep(formDataMap);
-                        if(!success) {
+                        if(success) {
+                            return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_SUCCESS;
+                        } else {
                             Alert a = new Alert(Alert.AlertType.ERROR,
                                     "Failed to submit the form's data to the database!" +
                                             "\nCheck the program's console output for details",
                                     ButtonType.CLOSE);
+                            return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE;
                         }
-                        return FormPaneController.FormClosingAction.CLOSE_FORM;
                     } catch (SQLException e) {
                         System.err.println("Failed to add rep!");
                         e.printStackTrace();
@@ -164,7 +234,7 @@ public class GUIMainController {
                                         + "\n" + e.getMessage(),
                                 ButtonType.CLOSE);
                         a.show();
-                        return FormPaneController.FormClosingAction.CLOSE_FORM;
+                        return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE;
                     }
                 })
                 .addColumnLabelForField("FirstName","First Name:")
@@ -174,10 +244,17 @@ public class GUIMainController {
                 .addColumnLabelForField("State","State:")
                 .addColumnLabelForField("PostalCode","Postal Code:")
                 .addColumnLabelForField("Commission","Commission:")
-                .addColumnLabelForField("Rate","Rate:");
+                .addColumnLabelForField("Rate","Rate:")
+                .afterFormExits((formClosingAction, formData) -> {  // TODO remove this chained method and lambda, was just for testing the afterFormExit handler
+                    System.out.println("hello from after form exit!");
+                    System.out.println("    formClosingAction = " + formClosingAction);
+                    System.out.println("    formData = " + formData);
+                });
+
         this.customerViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, customerDataSupplier)
                 .addBackButton()
                 .addExitButton(/*this.mainSceneSwapper*/);
+
         this.repViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, repDataSupplier)
                 .addBackButton()
                 .addButton("Add Representative",
@@ -196,6 +273,7 @@ public class GUIMainController {
                         DBViewerBuilder.ToolbarSide.LEFT
                 )
                 .addExitButton(/*this.mainSceneSwapper*/);
+
         this.ordersViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, ordersDataSupplier)
                 .addBackButton()
                 .addExitButton();
