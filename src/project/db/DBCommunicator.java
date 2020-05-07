@@ -7,16 +7,6 @@ import java.util.Map;
 
 public class DBCommunicator implements Closeable {
 
-    /* TODO ideas:
-        Should we rework this class to make and close connections every time data is requested,
-          instead of one connection that is required to last the entire application's lifetime?
-        If we are going to, it will need some reworking of the connection-closing handling,
-          because the ResultSet must be done with before the connection which created it can be closed.
-          Maybe, in that case, we can pass the entire connection creation and stuff (through a supplier?)
-            so that whatever code uses that ResultSet can handle the connection closing by itself?
-            Or wrap ResultSet in some sort of handler that will close them individually when they're done being used?
-     */
-
     private Connection conn;
 
     public DBCommunicator() throws SQLException {
@@ -123,6 +113,23 @@ public class DBCommunicator implements Closeable {
         int result = prepStmt.executeUpdate();
         System.out.println("Query result value: " + result);
         return true;
+    }
+
+
+    public String authLogin(String user, String pass) throws SQLException {
+        // hash and all that stuff
+        String hPass = pass; // currently it isn't doing anything. but it could :)
+        // see if it's right
+        PreparedStatement prepStmt = conn.prepareStatement("SELECT * FROM user WHERE Email = ? AND Password = ?");
+        prepStmt.setString(1, user);
+        prepStmt.setString(2, hPass);
+        ResultSet rset = prepStmt.executeQuery();
+        // if the result can go to a last row, then it does,
+        //   and gets the row index to determine the length of the ResultSet
+        if(rset.last() && rset.getRow() > 0) {
+            return rset.getString("FirstName") + " " + rset.getString("LastName");
+        }
+        return null;
     }
 
 }

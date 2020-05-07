@@ -9,10 +9,15 @@
 
 <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="10.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="project.gui.GUIMainController">
    <children>
-      <Label text="What would you like to do?">
+      <Label fx:id="welcomeLbl" text="Hello!">
          <font>
             <Font size="18.0" />
          </font></Label>
+      <Label layoutX="26.0" layoutY="26.0" text="What would you like to do?">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
       <Separator prefWidth="200.0" />
       <Button fx:id="btnReps" layoutX="61.0" layoutY="76.0" mnemonicParsing="false" onAction="#onActionReps" text="Manage Representatives" />
       <Button fx:id="btnCust" mnemonicParsing="false" onAction="#onActionCust" text="Manage Customers" />

@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import project.db.DBCommunicator;
 import project.gui.utils.dbviewer.DBViewerBuilder;
 import project.gui.utils.MainSceneSwapper;
@@ -30,6 +31,8 @@ public class GUIMainController {
     private Button btnOrders;
     @FXML
     private Button btnInv;
+    @FXML
+    private Label welcomeLbl;
 
     private MainSceneSwapper mainSceneSwapper;
     private DBCommunicator databaseCommunicator;
@@ -156,6 +159,11 @@ public class GUIMainController {
     public void setDatabaseCommunicator(DBCommunicator databaseCommunicator) {
         // get access to the database communicator for this application
         this.databaseCommunicator = databaseCommunicator;
+    }
+
+    public void personalizeName(String name) {
+        if(name == null) return;
+        this.welcomeLbl.setText("Hello, " + name + "!");
     }
 
     private void initializeBuilders(boolean justSetAllToNull) {
