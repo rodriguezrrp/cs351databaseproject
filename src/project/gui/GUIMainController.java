@@ -13,6 +13,7 @@ import project.gui.utils.form.FormPaneBuilder;
 import project.gui.utils.form.FormPaneController;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,6 +34,10 @@ public class GUIMainController {
     private Button btnInv;
     @FXML
     private Label welcomeLbl;
+    @FXML
+    private Button btnRepReport;
+    @FXML
+    private Button btnCustReport;
 
     private MainSceneSwapper mainSceneSwapper;
     private DBCommunicator databaseCommunicator;
@@ -61,6 +66,16 @@ public class GUIMainController {
     private Supplier<ResultSet> ordersDataSupplier = () -> {
         try {
             return databaseCommunicator.getOrdersData();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    };
+
+    private DBViewerBuilder repReportViewerBuilder;
+    private Supplier<ResultSet> repReportDataSupplier = () -> {
+        try {
+            return databaseCommunicator.getRepReportData();
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -139,10 +154,26 @@ public class GUIMainController {
         });
     }
 
-//    @FXML
-//    private void onActionInv() {
-//        System.out.println("inv");
-//    }
+
+    @FXML
+    private void onActionRepReport() {
+        this.mainSceneSwapper.toPane(() -> {
+            try {
+                return this.repReportViewerBuilder.create();
+            } catch (IOException e) {
+                System.err.println("repReportViewerBuilder was unable to create a pane!");
+                e.printStackTrace();
+                return null;
+            }
+        });
+    }
+
+    @FXML
+    private void onActionCustReport() {
+        System.out.println("cust report");
+        //TODO
+    }
+
 
     @FXML
     private void onActionExit() {
@@ -273,9 +304,9 @@ public class GUIMainController {
                 .addColumnLabelForField("Commission","Commission:")
                 .addColumnLabelForField("Rate","Rate:")
                 .afterFormExits((formClosingAction, formData) -> {  // TODO remove this chained method and lambda, was just for testing the afterFormExit handler
-                    System.out.println("test: hello from after form exit!");
-                    System.out.println("    formClosingAction = " + formClosingAction);
-                    System.out.println("    formData = " + formData);
+//                    System.out.println("test: hello from after form exit!");
+//                    System.out.println("    formClosingAction = " + formClosingAction);
+//                    System.out.println("    formData = " + formData);
                 });
 
         this.customerViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, customerDataSupplier)
@@ -318,6 +349,31 @@ public class GUIMainController {
 
         this.ordersViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, ordersDataSupplier)
                 .addBackButton()
+                .addExitButton();
+
+        this.repReportViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, repReportDataSupplier)
+                .addBackButton()
+                .addButton("Export to CSV",
+                        (rset) -> { return (ActionEvent actionEvent) -> {
+                            /* start of event handler lambda */
+//                            System.out.println(rset);
+                            try {
+                                rset.beforeFirst();
+                                DBCommunicator.exportReportAsCSV(rset, Paths.get(System.getProperty("user.dir"),"rep_report.csv"));
+                            } catch (IOException | SQLException e) {
+                                e.printStackTrace();
+                                // create an alert to let the user know something went wrong.
+                                Alert a = new Alert(Alert.AlertType.WARNING,
+                                        "Failed to successfully export to CSV!"
+                                                + "\n" + e.getClass().getCanonicalName()
+                                                + "\n" + e.getMessage(),
+                                        ButtonType.CLOSE);
+                                a.show();
+                            }
+                            /* end of event handler lambda */
+                        }; },
+                        DBViewerBuilder.ToolbarSide.LEFT
+                        )
                 .addExitButton();
     }
 

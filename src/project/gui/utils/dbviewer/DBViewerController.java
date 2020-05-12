@@ -75,6 +75,10 @@ public class DBViewerController {
 //        tableView.getScene().getRoot().getProperties()
     }
 
+    public void useResultSet(ResultSet rset) {
+        this.fillTable(rset);
+    }
+
     public void setupTableColumns(ResultSet rset) {
         // setup the table's columns
         ResultSetMetaData metaData;
@@ -175,17 +179,8 @@ public class DBViewerController {
             final List<Object> columnData = features.getValue();
             // note index-1, because ResultSet's column indexing starts from 1, not 0,
             // and this must be translated into the standard indexing for Java's Lists
-            final Object value = columnData.get(index-1);
-
-            try {
-                SimpleStringProperty temp = new SimpleStringProperty(value.toString());
-                return temp;
-            }catch (Exception e){
-                e.printStackTrace();
-                return new SimpleStringProperty("NULL");
-            }
-
-            //return new SimpleStringProperty(value.toString());
+            final Object valueFromDB = columnData.get(index-1);
+            return new SimpleStringProperty(valueFromDB == null ? "NULL" : valueFromDB.toString());
             // As a side note: the ObservableValue returned from this method actually is not observing anything,
             // because a new SimpleStringProperty is getting created each time this is called,
             // and its value is not bound to anything.

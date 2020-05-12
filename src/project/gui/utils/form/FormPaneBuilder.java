@@ -107,7 +107,7 @@ public class FormPaneBuilder {
                 List<String> dropdownList = ((Supplier<List<String>>) value).get();
                 ctrlr.addDropdown(label, displayText, dropdownList);
             } else {
-                System.out.println("Ignoring type ");
+                System.out.println("form builder: ignoring type " + type);
             }
         }
         // return the prepared form pane

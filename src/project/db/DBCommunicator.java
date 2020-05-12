@@ -1,7 +1,10 @@
 package project.db;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.Map;
 
@@ -42,6 +45,19 @@ public class DBCommunicator implements Closeable {
     public ResultSet getOrdersData() throws SQLException {
         Statement stmt = conn.createStatement();
         String sql ="SELECT * FROM orders";
+        ResultSet rset = stmt.executeQuery(sql);
+        return rset;
+    }
+
+    public ResultSet getRepReportData() throws SQLException {
+        Statement stmt = conn.createStatement();
+        String sql =
+                "SELECT rep.RepNum, rep.FirstName, rep.LastName, " +
+                "    COUNT(customer.CustomerNum) AS `CustomerCount`, " +
+                "    AVG(customer.Balance) AS `AverageBalance` " +
+                "FROM customer " +
+                "RIGHT JOIN rep ON customer.RepNum = rep.RepNum " +
+                "GROUP BY rep.RepNum ";
         ResultSet rset = stmt.executeQuery(sql);
         return rset;
     }
@@ -130,6 +146,35 @@ public class DBCommunicator implements Closeable {
             return rset.getString("FirstName") + " " + rset.getString("LastName");
         }
         return null;
+    }
+
+
+    static final String CSV_DELIM = ",";
+    static final String NEWLINE = "\n";
+
+    public static void exportReportAsCSV(ResultSet resultSet, Path csvExportFilePath) throws IOException, SQLException {
+        try(BufferedWriter fileOut = Files.newBufferedWriter(csvExportFilePath)) {
+            // print CSV headers first
+            ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+            int colCt = resultSetMetaData.getColumnCount();
+            for (int i = 1; i <= colCt; i++) {
+                String columnLabel = resultSetMetaData.getColumnLabel(i);
+                if(i > 1) fileOut.write(CSV_DELIM);
+                fileOut.write(columnLabel);
+            }
+            // print resultSet's row contents
+            while (resultSet.next()) {
+                fileOut.write(NEWLINE);
+                for (int i = 1; i <= colCt; i++) {
+                    if(i > 1) fileOut.write(CSV_DELIM);
+                    String s = resultSet.getString(i);
+                    fileOut.write(s == null ? "NULL" : s);
+                }
+            }
+            // ensure the writer finishes writing before it gets auto-closed by the try-with-resources clause
+            fileOut.write(NEWLINE); // write an extra newline, just in case ;)
+            fileOut.flush();
+        }
     }
 
 }

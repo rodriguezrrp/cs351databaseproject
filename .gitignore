@@ -86,3 +86,5 @@ nb-configuration.xml
 # 'Un-ignore' our library  :)
 !ourlibraries/
 !ourlibraries/**
+
+*.csv
