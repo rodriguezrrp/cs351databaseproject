@@ -63,7 +63,7 @@ public class DBCommunicator implements Closeable {
     }
 
     public ResultSet getCustReportData(String customerName) throws SQLException {
-        String sql = "SELECT customer.CustomerName, SUM(QuotedPrice) AS OrdersPricesTotal" +
+        String sql = "SELECT customer.CustomerName, SUM(QuotedPrice) AS OrdersPricesTotal " +
                 "FROM customer " +
                 "LEFT JOIN orders ON orders.CustomerNum = Customer.CustomerNum " +
                 "LEFT JOIN orderline ON orders.OrderNum = orderline.orderNum " +
