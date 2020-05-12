@@ -62,6 +62,18 @@ public class DBCommunicator implements Closeable {
         return rset;
     }
 
+    public ResultSet getCustReportData(String customerName) throws SQLException {
+        String sql = "SELECT customer.CustomerName, SUM(QuotedPrice) AS OrdersPricesTotal" +
+                "FROM customer " +
+                "LEFT JOIN orders ON orders.CustomerNum = Customer.CustomerNum " +
+                "LEFT JOIN orderline ON orders.OrderNum = orderline.orderNum " +
+                "WHERE CustomerName = ?";
+        PreparedStatement prepStmt = conn.prepareStatement(sql);
+        prepStmt.setString(1, customerName);
+        ResultSet rset = prepStmt.executeQuery();
+        return rset;
+    }
+
     public ResultSet getListOfCustNames() throws SQLException {
         Statement stmt = conn.createStatement();
         String sql ="SELECT CustomerName FROM customer";

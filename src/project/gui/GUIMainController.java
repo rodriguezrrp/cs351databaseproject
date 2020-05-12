@@ -13,6 +13,7 @@ import project.gui.utils.form.FormPaneBuilder;
 import project.gui.utils.form.FormPaneController;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class GUIMainController {
@@ -102,6 +104,18 @@ public class GUIMainController {
     };
     private FormPaneBuilder custCredLimFormBuilder;
 
+    private FormPaneBuilder custReportSelectorFormBuilder;
+    private Function<String, DBViewerBuilder> custReportResultViewerBuilderGenerator;
+    private Function<String, Supplier<ResultSet>> custReportDataSupplier = (custName) -> { return () -> {
+        try {
+            return databaseCommunicator.getCustReportData(custName);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }; };
+
+
 
     public GUIMainController() { }
 
@@ -170,8 +184,15 @@ public class GUIMainController {
 
     @FXML
     private void onActionCustReport() {
-        System.out.println("cust report");
-        //TODO
+        this.mainSceneSwapper.toPane(() -> {
+            try {
+                return this.custReportSelectorFormBuilder.create();
+            } catch (IOException e) {
+                System.err.println("custReportSelectorFormBuilder was unable to create a pane!");
+                e.printStackTrace();
+                return null;
+            }
+        });
     }
 
 
@@ -302,12 +323,7 @@ public class GUIMainController {
                 .addColumnLabelForField("State","State:")
                 .addColumnLabelForField("PostalCode","Postal Code:")
                 .addColumnLabelForField("Commission","Commission:")
-                .addColumnLabelForField("Rate","Rate:")
-                .afterFormExits((formClosingAction, formData) -> {  // TODO remove this chained method and lambda, was just for testing the afterFormExit handler
-//                    System.out.println("test: hello from after form exit!");
-//                    System.out.println("    formClosingAction = " + formClosingAction);
-//                    System.out.println("    formData = " + formData);
-                });
+                .addColumnLabelForField("Rate","Rate:");
 
         this.customerViewerBuilder = justSetAllToNull ? null : new DBViewerBuilder(this.mainSceneSwapper, customerDataSupplier)
                 .addBackButton()
@@ -359,12 +375,19 @@ public class GUIMainController {
 //                            System.out.println(rset);
                             try {
                                 rset.beforeFirst();
-                                DBCommunicator.exportReportAsCSV(rset, Paths.get(System.getProperty("user.dir"),"rep_report.csv"));
+                                Path outPath = Paths.get(System.getProperty("user.dir"),"rep_report.csv");
+                                DBCommunicator.exportReportAsCSV(rset, outPath);
+                                Alert a = new Alert(Alert.AlertType.INFORMATION,
+                                        "Successfully exported to CSV!\n"
+                                                + "Exported to:\n"
+                                                + outPath.toString(),
+                                        ButtonType.CLOSE);
+                                a.show();
                             } catch (IOException | SQLException e) {
                                 e.printStackTrace();
                                 // create an alert to let the user know something went wrong.
                                 Alert a = new Alert(Alert.AlertType.WARNING,
-                                        "Failed to successfully export to CSV!"
+                                        "Failed while exporting to CSV!"
                                                 + "\n" + e.getClass().getCanonicalName()
                                                 + "\n" + e.getMessage(),
                                         ButtonType.CLOSE);
@@ -375,6 +398,65 @@ public class GUIMainController {
                         DBViewerBuilder.ToolbarSide.LEFT
                         )
                 .addExitButton();
+
+        this.custReportResultViewerBuilderGenerator = justSetAllToNull ? null : (String custName) -> {
+//            System.out.println("custName = " + custName);
+            return new DBViewerBuilder(this.mainSceneSwapper, custReportDataSupplier.apply(custName))
+                    .addBackButton()
+                    .addButton("Export to CSV",
+                            (rset) -> { return (ActionEvent actionEvent) -> {
+                                /* start of event handler lambda */
+//                            System.out.println(rset);
+                                try {
+                                    rset.beforeFirst();
+                                    Path outPath = Paths.get(System.getProperty("user.dir"),"cust_"+custName+"_report.csv");
+                                    DBCommunicator.exportReportAsCSV(rset, outPath);
+                                    Alert a = new Alert(Alert.AlertType.INFORMATION,
+                                            "Successfully exported to CSV!\n"
+                                                    + "Exported to:\n"
+                                                    + outPath.toString(),
+                                            ButtonType.CLOSE);
+                                    a.show();
+                                } catch (IOException | SQLException e) {
+                                    e.printStackTrace();
+                                    // create an alert to let the user know something went wrong.
+                                    Alert a = new Alert(Alert.AlertType.WARNING,
+                                            "Failed while exporting to CSV!"
+                                                    + "\n" + e.getClass().getCanonicalName()
+                                                    + "\n" + e.getMessage(),
+                                            ButtonType.CLOSE);
+                                    a.show();
+                                }
+                                /* end of event handler lambda */
+                            }; },
+                            DBViewerBuilder.ToolbarSide.LEFT
+                    )
+                    .addExitButton();
+        };
+
+        // note: when this form exits, it starts up the updater form (see above)
+        this.custReportSelectorFormBuilder = justSetAllToNull ? null : new FormPaneBuilder(
+                mainSceneSwapper,
+                "Select Customer to Report", "Select",
+                (formData) -> { return FormPaneController.FormClosingAction.CLOSE_FORM_WITH_SUCCESS; }
+                )
+                .addColumnLabelForDropdown(custNameSelectDataSupplier, "CustomerName", "Customer To Report:")
+                .afterFormExits((FormPaneController.FormClosingAction closingAction, Map<String,String> formData) -> {
+                    if(formData == null || closingAction.equals(FormPaneController.FormClosingAction.CLOSE_FORM_WITH_FAILURE))
+                        return;
+                    String name = formData.get("CustomerName");
+                    DBViewerBuilder reportResViewer = this.custReportResultViewerBuilderGenerator.apply(name);
+//                    this.mainSceneSwapper.back();
+                    this.mainSceneSwapper.toPane(() -> {
+                        try {
+                            return reportResViewer.create();
+                        } catch (IOException e) {
+                            System.err.println("reportResViewer's afterFormExits was unable to create a pane!");
+                            e.printStackTrace();
+                            return null;
+                        }
+                    });
+                });
     }
 
 }
